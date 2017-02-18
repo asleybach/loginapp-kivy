@@ -7,6 +7,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
+from kivy.uix.popup import Popup
 
 '''Esta aplicacion solamente sirve para obtener ciertos
 datos de registro y al hacer clic...muestra los datos enviados'''
@@ -14,7 +15,7 @@ datos de registro y al hacer clic...muestra los datos enviados'''
 class registroApp(App):
 	def __init__(self, **kwargs):
 		super(registroApp, self).__init__(**kwargs)
-		pass 
+		
 									
 	def build(self):
 		
@@ -41,19 +42,34 @@ class registroApp(App):
 		self.cintillo_botones=BoxLayout(orientation='horizontal')
 		btn_limpiar=Button(text="Limpiar")
 		btn_reg=Button(text="Enviar")
-		btn_cancelar=Button(text="Cancelar")
+		btn_cerrar=Button(text="Cerrar")
 		self.cintillo_botones.add_widget(btn_limpiar)
 		self.cintillo_botones.add_widget(btn_reg)
-		self.cintillo_botones.add_widget(btn_cancelar)
+		self.cintillo_botones.add_widget(btn_cerrar)
 		self.pantalla.add_widget(self.cintillo_botones)
 	
-		def salida(text):
+		def Enviar(text):
 			a=str(text_cedula.text)
 			b=str(text_datos.text)
-			print a,b
-			text_cedula.text=""
-			text_datos.text=""
-		btn_reg.bind(on_press=salida)
+			if a=="" or b=="":
+				texto_error='''
+\nChequee los datos en cada campo\nPosiblemente nos sean correctos
+o esten vacios\n\n\n\nclic fuera de este mensaje para volver'''
+				popup = Popup(title=' Datos Incompletos...Chequee por favor ', content=Label(text=texto_error),
+				size_hint=(None, None), size=(300,300))
+				popup.open()
+			else:
+				print a,b
+				text_cedula.text=""
+				text_datos.text=""
+				texto_correcto='''
+\nLos datos fueron enviados\n\n\n
+clic fuera de este mensaje para continuar''' 
+				popup = Popup(title='¡¡Envio Satisfactorio!!', content=Label(text=texto_correcto),
+				size_hint=(None, None), size=(400, 200))
+				popup.open()
+			
+		btn_reg.bind(on_press=Enviar)
 		
 		def limpiar(text):
 			text_cedula.text=""
@@ -62,7 +78,7 @@ class registroApp(App):
 		
 		def cancel(self):
 			registroApp().stop()
-		btn_cancelar.bind(on_press=cancel)
+		btn_cerrar.bind(on_press=cancel)
 		
 		
 		return self.pantalla
