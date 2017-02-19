@@ -63,7 +63,7 @@ o esten vacios\n\n\n\nclic fuera de este mensaje para volver'''
 				size_hint=(None, None), size=(300,300))
 				popup.open()
 			else:
-				cursor.execute("INSERT INTO datos (cedula, nombre_apellido) VALUES ('" + a + "', '" + b + "')")
+				cursor.execute("INSERT INTO datos (cedula, nombre) VALUES ('" + a + "', '" + b + "')")
 				cnn_db.commit()
 				print a,b
 				text_cedula.text=""
@@ -83,8 +83,8 @@ clic fuera de este mensaje para continuar'''
 		btn_limpiar.bind(on_press=limpiar)
 		
 		def cancel(self):
-			print("Close DataBase")
 			cnn_db.close()
+			print("Close DataBase")
 			registroApp().stop()
 		btn_cerrar.bind(on_press=cancel)
 		
@@ -93,5 +93,3 @@ clic fuera de este mensaje para continuar'''
 						
 if __name__=='__main__':
 	registroApp().run()
-
-
