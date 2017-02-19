@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 import kivy
+import sqlite3
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -8,24 +10,20 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
-import sqlite3
 
-#asi se crea desde el script la bd en sqlite3.. le damos el nombre: registro
 sqlite3_file='registro'
 cnn_db=sqlite3.connect(sqlite3_file)
 cursor=cnn_db.cursor()
-cursor.execute('''CREATE TABLE IF NOT EXISTS datos  (cedula integer PRIMARY KEY, nombre_apellido TEXT)''')
 
 class registroApp(App):
 	def __init__(self, **kwargs):
 		super(registroApp, self).__init__(**kwargs)
-		
-									
+											
 	def build(self):
 		
 		self.pantalla=GridLayout(orientation='vertical',spacing=10, padding=10, rows=5)
 		self.cintillo=BoxLayout(orientation='horizontal')
-		label_cintillo=Label(text="Login Screen", font_size=40)
+		label_cintillo=Label(text="Serching...", font_size=40)
 		self.cintillo.add_widget(label_cintillo)
 		self.pantalla.add_widget(self.cintillo)
 		
@@ -36,59 +34,90 @@ class registroApp(App):
 		self.cintillo2.add_widget(text_cedula)
 		self.pantalla.add_widget(self.cintillo2)
 		
-		self.cintillo3=BoxLayout(orientation='horizontal')
-		label_datos=Label(text="Nombre y Apellido:", font_size=20)
-		text_datos=TextInput(multiline=False,font_size=30)
-		self.cintillo3.add_widget(label_datos)
-		self.cintillo3.add_widget(text_datos)
+		self.cintillo3=BoxLayout(orientation='vertical')
+		label_salida1=Label(text="", font_size=20)
+		self.cintillo3.add_widget(label_salida1)
+		label_salida2=Label(text="", font_size=20)
+		self.cintillo3.add_widget(label_salida2)
 		self.pantalla.add_widget(self.cintillo3)
 		
 		self.cintillo_botones=BoxLayout(orientation='horizontal')
-		btn_limpiar=Button(text="Limpiar")
-		btn_reg=Button(text="Enviar")
+		btn_imprimir=Button(text="Imprimir")
+		btn_buscar=Button(text="Buscar")
 		btn_cerrar=Button(text="Cerrar")
+		btn_limpiar=Button(text="Limpiar")
 		self.cintillo_botones.add_widget(btn_limpiar)
-		self.cintillo_botones.add_widget(btn_reg)
+		self.cintillo_botones.add_widget(btn_imprimir)
+		self.cintillo_botones.add_widget(btn_buscar)
 		self.cintillo_botones.add_widget(btn_cerrar)
 		self.pantalla.add_widget(self.cintillo_botones)
 	
-		def Enviar(text):
+		def buscar(text):
 			a=str(text_cedula.text)
-			b=str(text_datos.text)
-			if a=="" or b=="":
+			if a=="":
 				texto_error='''
-\nChequee los datos en cada campo\nPosiblemente nos sean correctos
-o esten vacios\n\n\n\nclic fuera de este mensaje para volver'''
+\nChequee el dato cédula en campo correspondiente\nPosiblemente nos sea correcto
+o este vacio\n\n\n\nclic fuera de este mensaje para volver'''
 				popup = Popup(title=' Datos Incompletos...Chequee por favor ', content=Label(text=texto_error),
-				size_hint=(None, None), size=(300,300))
+				size_hint=(None, None), size=(400,350))
 				popup.open()
 			else:
-				cursor.execute("INSERT INTO datos (cedula, nombre) VALUES ('" + a + "', '" + b + "')")
-				cnn_db.commit()
-				print a,b
+				cursor.execute("SELECT cedula, nombre_apellido from datos WHERE cedula ='" + a + "'")
 				text_cedula.text=""
-				text_datos.text=""
+				cnn_db.commit()
+				for raw in cursor:
+						label_salida1.text = ("Cédula: " + str(raw[0]))
+						label_salida2.text = ("Nombre y Apellido: " + raw[1])				
+		btn_buscar.bind(on_press=buscar)
+		
+		def Imprimir(Button):
+			ver=str(label_salida1.text)
+			if ver == "":
+				texto_error='''
+\nChequee la busqueda correspondiente\nno hay datos que imprimir\n\n\n\nclic fuera de este mensaje para volver'''
+				popup = Popup(title=' Error ', content=Label(text=texto_error),
+				size_hint=(None, None), size=(400,350))
+				popup.open()
+			else:
+				text_cedula.text=""
+				label_salida1.text=""
+				label_salida2.text=""
 				texto_correcto='''
-\nLos datos fueron enviados\n\n\n
-clic fuera de este mensaje para continuar''' 
-				popup = Popup(title='¡¡Envio Satisfactorio!!', content=Label(text=texto_correcto),
+\nLos datos fueron enviados a la impresora\n\n\n
+clic fuera de este mensaje para continuar'''
+				popup = Popup(title='¡¡Imprimiendo...!!', content=Label(text=texto_correcto), 
 				size_hint=(None, None), size=(400, 200))
 				popup.open()
-			
-		btn_reg.bind(on_press=Enviar)
+				
+				impresora=open("/dev/usb/lp0","w")
+
+				text_print=('''
+				***********************************
+				...Salida de datos del sistema...
+				***********************************
+
+				***********************************
+				******* Cédula:	%s	***************
+				******* Apellido:	***************
+
+				***********************************
+				''')
+				impresora.write(text_print)
+				impresora.close()
+		btn_imprimir.bind(on_press=Imprimir)
 		
-		def limpiar(text):
+		def limpiar(self):
 			text_cedula.text=""
-			text_datos.text=""
-		btn_limpiar.bind(on_press=limpiar)
+			label_salida1.text=""
+			label_salida2.text=""
+		btn_limpiar.bind(on_release=limpiar)
 		
 		def cancel(self):
 			cnn_db.close()
 			print("Close DataBase")
 			registroApp().stop()
 		btn_cerrar.bind(on_press=cancel)
-		
-		
+				
 		return self.pantalla
 						
 if __name__=='__main__':
