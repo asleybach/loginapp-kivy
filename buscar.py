@@ -3,6 +3,7 @@
 import os
 import kivy
 import sqlite3
+import reportlab
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -10,6 +11,7 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
+from reportlab.pdfgen import canvas
 
 sqlite3_file='registro'
 cnn_db=sqlite3.connect(sqlite3_file)
@@ -82,29 +84,14 @@ o este vacio\n\n\n\nclic fuera de este mensaje para volver'''
 				text_cedula.text=""
 				label_salida1.text=""
 				label_salida2.text=""
-				texto_correcto='''
-\nLos datos fueron enviados a la impresora\n\n\n
-clic fuera de este mensaje para continuar'''
-				popup = Popup(title='¡¡Imprimiendo...!!', content=Label(text=texto_correcto), 
-				size_hint=(None, None), size=(400, 200))
-				popup.open()
+				c = canvas.Canvas("factura.pdf")
+				c.drawString(50,700,"Bienvenidos al servicio de facturación con ReportLab")
+				c.drawString(100,600,"En esta sección se espera la factura impresa")
+				c.showPage()
+				c.save()
+				os.popen("/usr/bin/evince-previewer hello.pdf")
 				
-				impresora=open("/dev/usb/lp0","w")
-
-				text_print=('''
-				***********************************
-				...Salida de datos del sistema...
-				***********************************
-
-				***********************************
-				******* Cédula:	%s	***************
-				******* Apellido:	***************
-
-				***********************************
-				''')
-				impresora.write(text_print)
-				impresora.close()
-		btn_imprimir.bind(on_press=Imprimir)
+#falta colocar datos aqui del pdf creado e imprimir
 		
 		def limpiar(self):
 			text_cedula.text=""
