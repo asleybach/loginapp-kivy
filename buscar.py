@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import sys
 import os
 import kivy
+
+from kivy.config import Config
+Config.set('graphics', 'width', '700')
+Config.set('graphics', 'height', '500')
+
 import sqlite3
 import reportlab
 from kivy.app import App
@@ -25,7 +31,7 @@ class registroApp(App):
 		
 		self.pantalla=GridLayout(orientation='vertical',spacing=10, padding=10, rows=5)
 		self.cintillo=BoxLayout(orientation='horizontal')
-		label_cintillo=Label(text="Serching...", font_size=40)
+		label_cintillo=Label(text="Buscando...", font_size=40)
 		self.cintillo.add_widget(label_cintillo)
 		self.pantalla.add_widget(self.cintillo)
 		
@@ -65,7 +71,7 @@ o este vacio\n\n\n\nclic fuera de este mensaje para volver'''
 				popup.open()
 			else:
 				cursor.execute("SELECT cedula, nombre_apellido from datos WHERE cedula ='" + a + "'")
-				text_cedula.text=""
+				#text_cedula.text=""
 				cnn_db.commit()
 				for raw in cursor:
 						label_salida1.text = ("Cédula: " + str(raw[0]))
@@ -81,15 +87,29 @@ o este vacio\n\n\n\nclic fuera de este mensaje para volver'''
 				size_hint=(None, None), size=(400,350))
 				popup.open()
 			else:
+				salida_texto1=text_cedula.text
+				salida_texto2=label_salida2.text
+				print (salida_texto1)
+				print (salida_texto2)
+				documento=canvas.Canvas("salida.pdf")
+				
+				def generar(documento):				
+					documento.drawString(100,700,"Resultado de la Búsqueda")
+					documento.drawString(100,680,"En esta sección se muestran")
+					documento.drawString(100,660,"_____________________________")
+					documento.drawString(100,640,"Los Dato Son...")					
+					documento.drawString(100,620,"la cedula es: "+salida_texto1)
+					documento.drawString(100,600,salida_texto2)
+					documento.drawString(100,580,"______________________________")
+				generar(documento)
+				documento.showPage()
+				documento.save()
 				text_cedula.text=""
 				label_salida1.text=""
 				label_salida2.text=""
-				c = canvas.Canvas("factura.pdf")
-				c.drawString(50,700,"Bienvenidos al servicio de facturación con ReportLab")
-				c.drawString(100,600,"En esta sección se espera la factura impresa")
-				c.showPage()
-				c.save()
-				os.popen("/usr/bin/evince-previewer hello.pdf")
+				return os.popen("/usr/bin/evince-previewer salida.pdf")
+				
+		btn_imprimir.bind(on_press=Imprimir)
 				
 #falta colocar datos aqui del pdf creado e imprimir
 		
@@ -103,6 +123,7 @@ o este vacio\n\n\n\nclic fuera de este mensaje para volver'''
 			cnn_db.close()
 			print("Close DataBase")
 			registroApp().stop()
+			sys.exit()
 		btn_cerrar.bind(on_press=cancel)
 				
 		return self.pantalla
